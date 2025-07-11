@@ -1,0 +1,286 @@
+{
+  "name": "QUOTES POST ON INSTRAGRAM",
+  "nodes": [
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json.node }}",
+        "edge": "media",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "image_url",
+                "value": "= {{ $json.image_url }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $json.caption }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        500,
+        -60
+      ],
+      "id": "7ea58704-d16b-4258-bda1-9c3952532291",
+      "name": "Facebook Graph API1",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "REPLACE_ME",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $('EXTRACT URL').item.json.node }}",
+        "edge": "media_publish",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "creation_id",
+                "value": "={{ $json.id }}"
+              },
+              {
+                "name": "image_url",
+                "value": "={{ $('EXTRACT URL').item.json.image_url }}"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $('EXTRACT URL').item.json.caption }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -60
+      ],
+      "id": "d37f6e32-a319-4e07-8e44-78c219797db2",
+      "name": "Facebook Graph API",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "REPLACE_ME",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": " Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENROUTER_BEARER_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n  \"model\": \"google/gemini-2.5-flash-lite-preview-06-17\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"**You are a Prompt Generator for Daily Motivational Animal Posters.**\\n\\nUse the template below to generate a **new unique image prompt daily**, with slight variations in animal, quote, lighting, and artistic style. Output one prompt only per request.\\n\\n---\\n\\n## 🔧 Prompt Template\\nUltra-realistic cinematic animal portrait, centered composition, dramatic lighting, high contrast, black background, faceless or intense emotion, motivational quote in bold modern font on side or bottom -- animal = [LION/TIGER/SNAKE/WOLF/EAGLE/DRAGON/FACELESS HUMAN/SUNRISE/SUNSET/BEACH] -- quote = [“YOUR CUSTOM QUOTE HERE”], moody, raw emotion, minimalist background, poster layout, 4K sharp detail, inspirational aesthetic, perfect for dark wallpaper\\n\\n---\\n\\n## 🎯 Rules:\\n- Use **a different animal or element** every day\\n- **Repeat only after all 10 subjects are used once** (LION, TIGER, SNAKE, WOLF, EAGLE, DRAGON, FACELESS HUMAN, SUNRISE, SUNSET, BEACH)\\n- The **quote must match** the chosen subject’s energy and symbolism\\n- Keep layout and style consistent (poster-like, cinematic, raw emotion)\\n- Occasionally vary lighting (e.g. embers, fog, glowing sunset)\\n- **Do not always show full animal faces** — use close-up of eyes, side profiles, silhouettes, shadows, partial forms, or abstract representations for visual variety\\n\\n---\\n\\n## 🎨 Visual Suggestions (for variation):\\n- **LION/WOLF/TIGER**: intense close-up of eyes, silhouette with fog, partial face in shadows\\n- **SNAKE**: coiled body with glowing eyes, abstract scales, shadowy texture\\n- **DRAGON**: wing silhouette in mist, glowing eye only, fiery breath as focal point\\n- **FACELESS HUMAN**: hooded figure in silhouette, backlit form, no facial features\\n- **EAGLE**: sharp eye with beak, wide wings over mountains, stormy sky\\n- **SUNRISE/SUNSET**: silhouette of nature, lone figure facing horizon\\n- **BEACH**: fading footprints, sunset glow on waves, moody twilight form\\n\\n---\\n\\n## 📌 Examples\\n- \\\"Fall seven times. Rise as king on the eighth.\\\" — LION\\n- \\\"Silent. Deadly. Unseen. But always prepared.\\\" — SNAKE\\n- \\\"Some endings are just shadows of new beginnings.\\\" — SUNSET\\n\\n---\\n\\n📥 **Now, generate today’s daily prompt below. Ensure the animal or element hasn’t been used until the full set is completed. Choose a visually unique variation (not always full-face).**\"\n    }\n  ]\n}\n",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        -60
+      ],
+      "id": "b18aeeed-b198-4680-be5b-58bab60761f2",
+      "name": " SCRIPT"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": " https://api.together.xyz/v1/images/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOGETHER_AI_API_KEY"
+            },
+            {
+              "name": " Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "image/png"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n  \"model\": \"black-forest-labs/FLUX.1-schnell\",\n  \"prompt\": \"{{ $json.body.choices[0].message.content }}\",\n  \"n\": 1,\n  \"width\": 432,\n  \"height\": 768\n}\n",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        120,
+        -60
+      ],
+      "id": "fa947e82-3a51-44d4-bd33-bf2105d0b058",
+      "name": " IMAGE URL GENERATION"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -280,
+        -60
+      ],
+      "id": "75e77fba-0151-4733-b0b7-f42cbe533367",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4e0920fd-8699-4e7b-bd80-166d35881ee6",
+              "name": "image_url",
+              "value": "=  {{ $json.body.data[0].url }}",
+              "type": "string"
+            },
+            {
+              "id": "b4c1fed2-1ee1-44e0-8642-75154977c402",
+              "name": "caption",
+              "value": "If this hit you hard… ❤️ Like it 💬 Comment “RISE” 🔁 Share with a warrior 👣 Follow  for daily drops of cinematic motivation.",
+              "type": "string"
+            },
+            {
+              "id": "745e2ac1-b09e-4356-87e2-0680f2125082",
+              "name": "node",
+              "value": "YOUR_FACEBOOK_GRAPH_NODE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        -60
+      ],
+      "id": "6f5b29c6-8843-4c9a-9f2c-6eb6375bf2d0",
+      "name": "EXTRACT URL"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Facebook Graph API1": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " SCRIPT": {
+      "main": [
+        [
+          {
+            "node": " IMAGE URL GENERATION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " IMAGE URL GENERATION": {
+      "main": [
+        [
+          {
+            "node": "EXTRACT URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": " SCRIPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EXTRACT URL": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "97ff2ed2-c1ef-4bc8-a494-5b3de130ee49",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "REPLACE_ME"
+  },
+  "id": "zxkJGB5rDFrTrXoz",
+  "tags": []
+}
